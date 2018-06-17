@@ -6,6 +6,7 @@ module.exports = function (app) {
     app.get('/api/profile', profile);
     app.post('/api/logout', logout);
     app.post('/api/login', login);
+    app.put('/api/user/:userId', updateUser);
 
 
     var userModel = require('../models/user/user.model.server');
@@ -17,6 +18,19 @@ module.exports = function (app) {
             .then(function (user) {
                 if (user !== null) {
                     req.session['currentUser'] = user;
+                    res.json(user);
+                } else {
+                    res.sendStatus(404);
+                }
+            })
+    }
+
+    function updateUser(req, res) {
+        var user = req.body;
+        var userId = req.params['userId'];
+        userModel.updateUser(user, userId)
+            .then(function (response) {
+                if (response.ok === 1) {
                     res.json(user);
                 } else {
                     res.sendStatus(404);

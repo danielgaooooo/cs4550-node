@@ -3,6 +3,7 @@ module.exports = function (app) {
     app.post('/api/course/:courseId/section', createSection);
     app.get('/api/course/:courseId/section', findSectionsForCourse);
     app.post('/api/section/:sectionId/enrollment', enrollStudentInSection);
+    app.put('/api/section/:sectionId/unenrollment', unenrollStudentInSection);
     app.get('/api/student/section', findSectionsForStudent);
 
     var sectionModel = require('../models/section/section.model.server');
@@ -28,12 +29,21 @@ module.exports = function (app) {
         };
 
         var success;
+        var section;
         enrollmentModel.findEnrollmentByPair(enrollment)
             .then(function (response) {
                 success = response === null;
             })
             .then(function () {
-                if (success) {
+                sectionModel.findSectionById(sectionId)
+                    .then(function (response) {
+                        section = response;
+                    })
+            })
+            .then(function () {
+                if (section.seats <= 0) {
+                    res.sendStatus(403);
+                } else if (success) {
                     sectionModel
                         .decrementSectionSeats(sectionId)
                         .then(function () {
@@ -49,6 +59,27 @@ module.exports = function (app) {
             })
     }
 
+    function unenrollStudentInSection(req, res) {
+        var enrollmentId = req.params.sectionId;
+        var enrollment;
+        enrollmentModel.findEnrollmentById(enrollmentId)
+            .then(function (response) {
+                enrollment = response;
+            })
+            .then(function () {
+                sectionModel
+                    .incrementSectionSeats(enrollment.section)
+                    .then(function () {
+                        return enrollmentModel
+                            .unenrollStudentInSection(enrollmentId)
+                    })
+                    .then(function (enrollment) {
+                        res.json(enrollment);
+                    })
+
+            })
+    }
+
     function findSectionsForCourse(req, res) {
         var courseId = req.params['courseId'];
         sectionModel
@@ -60,6 +91,8 @@ module.exports = function (app) {
 
     function createSection(req, res) {
         var section = req.body;
+        var courseId = req.params['courseId'];
+        //section.courseId = courseId;
         sectionModel
             .createSection(section)
             .then(function (section) {
