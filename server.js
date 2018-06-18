@@ -55,4 +55,7 @@ userService(app);
 var sectionService = require('./services/section.service.server');
 sectionService(app);
 
+var enrollmentService = require('./services/enrollment.service.server');
+enrollmentService(app);
+
 app.listen(4000);
