@@ -58,4 +58,4 @@ sectionService(app);
 var enrollmentService = require('./services/enrollment.service.server');
 enrollmentService(app);
 
-app.listen(4000);
+app.listen(process.env.PORT || 4000);
